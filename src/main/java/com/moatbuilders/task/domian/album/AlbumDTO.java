@@ -1,12 +1,9 @@
 package com.moatbuilders.task.domian.album;
 
+import jakarta.validation.constraints.NotBlank;
 
-public class AlbumDTO {
-    private String artist;
-
-    private String albumName;
-
-    private String year;
-
-
-}
+public record AlbumDTO(
+        @NotBlank String artist,
+        @NotBlank String albumName,
+        @NotBlank String year
+) {}

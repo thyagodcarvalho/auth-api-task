@@ -3,19 +3,17 @@ package com.moatbuilders.task.controller;
 import com.moatbuilders.task.domian.user.AuthenticationDTO;
 import com.moatbuilders.task.domian.user.LoginResponseDTO;
 import com.moatbuilders.task.domian.user.RegisterDTO;
-import com.moatbuilders.task.domian.user.User;
+import com.moatbuilders.task.domian.user.UserEntity;
 import com.moatbuilders.task.infra.security.TokenService;
 import com.moatbuilders.task.repositories.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("auth")
@@ -24,7 +22,7 @@ public class AuthenticationController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private UserRepository repository;
+    private UserRepository userRepository;
 
     @Autowired
     private TokenService tokenService;
@@ -34,21 +32,32 @@ public class AuthenticationController {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.username(), data.password());
         var auth = this.authenticationManager.authenticate(usernamePassword);
 
-        var token = tokenService.generateToken((User) auth.getPrincipal());
+        var token = tokenService.generateToken((UserEntity) auth.getPrincipal());
 
-        return ResponseEntity.ok(new LoginResponseDTO(token));
+        return ResponseEntity.status(HttpStatus.OK).body((new LoginResponseDTO(token)));
+
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity validateToken(@RequestParam("token") String token) {
+
+        var login = tokenService.validateToken(token);
+
+        if (login.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("not authorized");
+
+        return ResponseEntity.status(HttpStatus.OK).body(new LoginResponseDTO(token));
 
     }
 
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody @Valid RegisterDTO data) {
-        if (this.repository.findByUsername(data.username()) != null) return ResponseEntity.badRequest().build();
+        if (this.userRepository.findByUsername(data.username()) != null) return ResponseEntity.badRequest().build();
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
-        User newUser = new User(data.fullName(), data.username(), encryptedPassword, data.role());
+        UserEntity newUser = new UserEntity(data.fullName(), data.username(), encryptedPassword, data.role());
 
-        this.repository.save(newUser);
+        this.userRepository.save(newUser);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

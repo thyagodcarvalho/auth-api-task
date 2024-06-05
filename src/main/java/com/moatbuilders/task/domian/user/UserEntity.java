@@ -14,12 +14,12 @@ import java.util.List;
 
 
 @Table(name = "users", schema = "public")
-@Entity(name = "users")
+@Entity(name = "usersEntity")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class User implements UserDetails {
+public class UserEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -30,7 +30,7 @@ public class User implements UserDetails {
     private String password;
     private UserRole role;
 
-    public User(String fullName, String username, String password, UserRole role) {
+    public UserEntity(String fullName, String username, String password, UserRole role) {
         this.fullName = fullName;
         this.username = username;
         this.password = password;
